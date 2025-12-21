@@ -24,6 +24,8 @@ Set Startup Type automatic
 Set-Service sshd -StartupType Automatic
 Make Powershell the default shell
 New-ItemProperty -Path &#34;HKLM:\SOFTWARE\OpenSSH&#34; -Name DefaultShell -Value &#34;C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe&#34; -PropertyType String -Force
+ssh-copy-id for Windows
+scp id_ed25519.pub olivier@192.168.56.106:/ProgramData/ssh/administrators_authorized_keys
 ">
         <meta name="HandheldFriendly" content="True">
         <meta name="MobileOptimized" content="320">
@@ -104,6 +106,8 @@ New-ItemProperty -Path &#34;HKLM:\SOFTWARE\OpenSSH&#34; -Name DefaultShell -Valu
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Set-Service sshd -StartupType Automatic
 </span></span></code></pre></div><p>Make Powershell the default shell</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>New-ItemProperty -Path <span style="color:#e6db74">&#34;HKLM:\SOFTWARE\OpenSSH&#34;</span> -Name DefaultShell -Value <span style="color:#e6db74">&#34;C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe&#34;</span> -PropertyType String -Force
+</span></span></code></pre></div><h2 id="ssh-copy-id-for-windows">ssh-copy-id for Windows</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>scp id_ed25519.pub olivier@192.168.56.106:/ProgramData/ssh/administrators_authorized_keys
 </span></span></code></pre></div>
 </div>
 
