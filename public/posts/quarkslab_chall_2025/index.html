@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Writeup challenge Quarkslab leHack 2025 &middot; </title>
+        <meta name="description" content="Introduction
+Ayant un peu de temps au début de ces vacances de Noël, j&rsquo;en ai profité pour revisiter un challenge qui m&rsquo;avait marqué cette année, et que je n&rsquo;avais pas eu l&rsquo;occasion de finir.
+Quelque chose que j&rsquo;ai rarement l&rsquo;occasion de faire, un chall reverse et hardware.
+Il s&rsquo;agit du challenge de Quarkslab, présenté à leur stand à LaHack 2025. J&rsquo;avais été marqué par le lore du challenge: un bombe à désamorcer.
+Je n&rsquo;ai pas de photo du stand, mais il y avait une petite bombe fictive à désamorcer, où le bon code devait être entré.">
+        <meta name="HandheldFriendly" content="True">
+        <meta name="MobileOptimized" content="320">
+        <meta name="generator" content="Hugo 0.153.1">
+        <meta name="robots" content="index,follow">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <link rel="stylesheet" href="http://localhost:1313/dist/site.css">
+        <link rel="stylesheet" href="http://localhost:1313/dist/syntax.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,400,600,700,300&subset=latin,cyrillic-ext,latin-ext,cyrillic">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+        
+        
+        
+        
+        
+
+    </head>
+    <body>
+        
+
+        <div id="wrapper">
+            <header class="site-header">
+                <div class="container">
+                    <div class="site-title-wrapper">
+                        
+                            <h1 class="site-title">
+                                <a href="http://localhost:1313/">Olivier LASNE</a>
+                            </h1>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </div>
+
+                    <ul class="site-nav">
+                        
+
+                    </ul>
+                </div>
+            </header>
+
+            <div id="container">
+
+
+<div class="container">
+    <article class="post-container">
+        <header class="post-header">
+    <h1 class="post-title">Writeup challenge Quarkslab leHack 2025</h1>
+    
+</header>
+
+        <div class="post-content clearfix">
+    
+
+    <h1 id="introduction">Introduction</h1>
+<p>Ayant un peu de temps au début de ces vacances de Noël, j&rsquo;en ai profité pour revisiter un challenge qui m&rsquo;avait marqué cette année, et que je n&rsquo;avais pas eu l&rsquo;occasion de finir.
+Quelque chose que j&rsquo;ai rarement l&rsquo;occasion de faire, un <strong>chall reverse</strong> et <strong>hardware</strong>.</p>
+<p>Il s&rsquo;agit du challenge de Quarkslab, présenté à leur stand à LaHack 2025. J&rsquo;avais été marqué par le <em>lore</em> du challenge: un bombe à désamorcer.
+Je n&rsquo;ai pas de photo du stand, mais il y avait une petite bombe fictive à désamorcer, où le bon code devait être entré.</p>
+<p>Le firmware de la bombe nous est fourni, ainsi que le schéma.</p>
+<ul>
+<li>firmware de la bombe: <a href="https://github.com/0xfalafel/quarkslab_chall_lehack-2025/blob/main/bomb-fw.uf2">https://github.com/0xfalafel/quarkslab_chall_lehack-2025/blob/main/bomb-fw.uf2</a></li>
+<li>schéma du circuit logique:</li>
+</ul>
+<p><img src="/chall_quarkslab/schematic.jpg" alt="schematics"></p>
+<p>On voit sur le schéma qu&rsquo;il s&rsquo;agit d&rsquo;un pico 2. Ça ne devrait pas être trop dur de trouver la doc pour les PINs. ;)</p>
+<h1 id="extraire-le-firmware">Extraire le firmware</h1>
+<p>Le firmware est un fichier UF2:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>❯ file bomb-fw.uf2
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>bomb-fw.uf2: UF2 firmware image, family 0xe48bff57, address 0x10ffff00, <span style="color:#ae81ff">2</span> total blocks
+</span></span></code></pre></div><p>Avec une recherche google, on tombe très vite sur un <a href="https://github.com/microsoft/uf2">dépot github de Microsoft</a>, avec un outil <a href="https://github.com/microsoft/uf2/blob/master/utils/uf2conv.md"><code>uf2conv.py</code></a> qui permet la convertion de <code>uf2</code> vers un format binaire.</p>
+<p>Il semblerait qu&rsquo;il s&rsquo;agissait de la solution attentdue pour extraire le firmware, malheurement et pour une raison quelconque, le script échouait à extraire le fichier chez moi.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>❯ python3 uf2conv.py bomb-fw.uf2
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>--- UF2 File Header Info ---
+</span></span><span style="display:flex;"><span>Family ID is RP2XXX_ABSOLUTE, hex value is 0xe48bff57
+</span></span><span style="display:flex;"><span>Target Address is 0x10ffff00
+</span></span><span style="display:flex;"><span>Family ID is RP2350_ARM_S, hex value is 0xe48bff59
+</span></span><span style="display:flex;"><span>Target Address is 0x10000000
+</span></span><span style="display:flex;"><span>All block flag values consistent, 0x2000
+</span></span><span style="display:flex;"><span>----------------------------
+</span></span><span style="display:flex;"><span>Converted to bin, output size: 0, start address: 0x0
+</span></span><span style="display:flex;"><span>Wrote <span style="color:#ae81ff">0</span> bytes to flash.bin
+</span></span></code></pre></div><p>C&rsquo;est l&rsquo;endroit où j&rsquo;en était resté lors de la conférence, mais <em>hacker vaillant rien d&rsquo;impossible</em>, le format <code>uf2</code> n&rsquo;est pas très complexe. On peut <strong>écrire un script python</strong> pour extraire le firmware.</p>
+<h2 id="le-format-uf2">Le format UF2</h2>
+
+</div>
+
+        <footer class="post-footer clearfix"><div class="share">
+    </div>
+</footer>
+    </article>
+</div>
+
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="container">
+                <div class="site-title-wrapper">
+                    <h1 class="site-title">
+                        <a href="http://localhost:1313/">Olivier LASNE</a>
+                    </h1>
+                    <a class="button-square button-jump-top js-jump-top" href="#" aria-label="Back to Top">
+                        <i class="fa fa-angle-up" aria-hidden="true"></i>
+                    </a>
+                </div>
+
+                <p class="footer-copyright">
+                    <span>&copy; 2025 / Powered by <a href="https://gohugo.io/">Hugo</a></span>
+                </p>
+                <p class="footer-copyright">
+                    <span><a href="https://github.com/roryg/ghostwriter">Ghostwriter theme</a> By <a href="http://jollygoodthemes.com">JollyGoodThemes</a></span>
+                    <span>/ <a href="https://github.com/jbub/ghostwriter">Ported</a> to Hugo By <a href="https://github.com/jbub">jbub</a></span>
+                </p>
+            </div>
+        </footer>
+
+        <script src="http://localhost:1313/js/jquery-1.11.3.min.js"></script>
+        <script src="http://localhost:1313/js/jquery.fitvids.js"></script>
+        <script src="http://localhost:1313/js/scripts.js"></script>
+        
+    </body>
+</html>
+
