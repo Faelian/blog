@@ -145,3 +145,67 @@ with open(sys.argv[1], 'rb') as f:
 		print(f"{BLUE}Magic end:{RESET} {hex(magicEnd)}\n")
 ```
 
+La sortie du script est la suivante:
+
+{{< rawhtml>}}
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="background-color:initial;"><font color="#FF6AC1">❯</font> <font color="#A6E22E">python3</font> <u style="text-decoration-style:single">read_headers.py</u> <u style="text-decoration-style:single">bomb-fw.uf2</u>
+<font color="#AE81FF"><b>Block 0:</b></font>
+<font color="#66D9EF">First magic number:</font> b&apos;UF2\n&apos;
+<font color="#66D9EF">Second magic number:</font> 0x9e5d5157
+<font color="#66D9EF">Flags:</font><font color="#F4BF75"> 0x2000</font>
+<font color="#66D9EF">Target address:</font> 0x10ffff00
+<font color="#66D9EF">Size of the payload:</font> 256
+<font color="#66D9EF">Bloc number:</font> 0
+<font color="#66D9EF">Total number of blocks:</font> 2
+<font color="#66D9EF">File size (or family ID):</font> 3834380119
+<font color="#66D9EF">Magic end:</font> 0xab16f30
+
+<font color="#AE81FF"><b>Block 1:</b></font>
+<font color="#66D9EF">First magic number:</font> b&apos;UF2\n&apos;
+<font color="#66D9EF">Second magic number:</font> 0x9e5d5157
+<font color="#66D9EF">Flags:</font><font color="#F4BF75"> 0x2000</font>
+<font color="#66D9EF">Target address:</font> 0x10000000
+<font color="#66D9EF">Size of the payload:</font> 256
+<font color="#66D9EF">Bloc number:</font> 0
+<font color="#66D9EF">Total number of blocks:</font> 327
+<font color="#66D9EF">File size (or family ID):</font> 3834380121
+<font color="#66D9EF">Magic end:</font> 0xab16f30
+
+<font color="#AE81FF"><b>Block 2:</b></font>
+<font color="#66D9EF">First magic number:</font> b&apos;UF2\n&apos;
+<font color="#66D9EF">Second magic number:</font> 0x9e5d5157
+<font color="#66D9EF">Flags:</font><font color="#F4BF75"> 0x2000</font>
+<font color="#66D9EF">Target address:</font> 0x10000100
+<font color="#66D9EF">Size of the payload:</font> 256
+<font color="#66D9EF">Bloc number:</font> 1
+<font color="#66D9EF">Total number of blocks:</font> 327
+<font color="#66D9EF">File size (or family ID):</font> 3834380121
+<font color="#66D9EF">Magic end:</font> 0xab16f30
+
+<font color="#AE81FF"><b>Block 3:</b></font>
+<font color="#66D9EF">First magic number:</font> b&apos;UF2\n&apos;
+<font color="#66D9EF">Second magic number:</font> 0x9e5d5157
+<font color="#66D9EF">Flags:</font><font color="#F4BF75"> 0x2000</font>
+<font color="#66D9EF">Target address:</font> 0x10000200
+<font color="#66D9EF">Size of the payload:</font> 256
+<font color="#66D9EF">Bloc number:</font> 2
+<font color="#66D9EF">Total number of blocks:</font> 327
+<font color="#66D9EF">File size (or family ID):</font> 3834380121
+<font color="#66D9EF">Magic end:</font> 0xab16f30
+
+[...]
+
+<font color="#AE81FF"><b>Block 327:</b></font>
+<font color="#66D9EF">First magic number:</font> b&apos;UF2\n&apos;
+<font color="#66D9EF">Second magic number:</font> 0x9e5d5157
+<font color="#66D9EF">Flags:</font><font color="#F4BF75"> 0x2000</font>
+<font color="#66D9EF">Target address:</font> 0x10014600
+<font color="#66D9EF">Size of the payload:</font> 256
+<font color="#66D9EF">Bloc number:</font> 326
+<font color="#66D9EF">Total number of blocks:</font> 327
+<font color="#66D9EF">File size (or family ID):</font> 3834380121
+<font color="#66D9EF">Magic end:</font> 0xab16f30
+</pre></code></pre></div> 
+{{</rawhtml>}}
+
+Si on fait un grep 
