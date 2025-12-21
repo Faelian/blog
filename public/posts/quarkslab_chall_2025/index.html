@@ -292,7 +292,34 @@ Tous les sont des <em>entiers 32 bit non-signés</em> en <em>little endian</em>.
 </pre></code></pre></div> 
 
 
-<p>Si on fait un grep</p>
+<p>Si on fait un grep de <code>Flags</code>, on voit que l&rsquo;on a que des <code>0x2000</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>❯ python3 read_headers.py bomb-fw.uf2 | grep <span style="color:#e6db74">&#39;Flags&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span>Flags: 0x2000
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>...<span style="color:#f92672">]</span>
+</span></span></code></pre></div><p>Les <a href="https://github.com/microsoft/uf2/blob/master/README.md#flags">flags possibles</a> sont:</p>
+<ul>
+<li><code>0x00000001</code> – n&rsquo;est pas la mémoire flash principale – ce bloc doit être ignoré lors de l&rsquo;écriture de la mémoire flash de l&rsquo;appareil ; il peut être utilisé pour stocker des &ldquo;commentaires&rdquo;.</li>
+<li><code>0x00001000</code> – conteneur de fichier.</li>
+<li><code>0x00002000</code> – familyID présent – lorsqu&rsquo;il est défini, fileSize/familyID contient une valeur identifiant la famille de carte (généralement correspond à un microcontrôleur).</li>
+<li><code>0x00004000</code> – somme de contrôle MD5 présente.</li>
+<li><code>0x00008000</code> – balises d&rsquo;extension présentes.</li>
+</ul>
+<h3 id="analyse-des-headers">Analyse des <em>headers</em></h3>
+<p><strong>À part</strong> pour le <em><strong>bloc 0</strong></em>, qui donne des informations sur la Board. Il semblerait donc que tous <strong>les blocs contiennent uniquement des données</strong>.<br>
+Ça nous simplifie la vie, cela fait ça de moins à gérer dans le script.</p>
+<p>On constate également que l&rsquo;<strong>adresse</strong> à laquelle le <strong><em>firmware</em> est chargé</strong> est <code>0x10000000</code>. Cela nous servira lorsque l&rsquo;on fera la <em>rétro-ingénerie</em> du <em>firmware</em>.</p>
 
 </div>
 

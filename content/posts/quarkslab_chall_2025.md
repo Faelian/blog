@@ -208,4 +208,39 @@ La sortie du script est la suivante:
 </pre></code></pre></div> 
 {{</rawhtml>}}
 
-Si on fait un grep 
+Si on fait un grep de `Flags`, on voit que l'on a que des `0x2000`.
+
+```bash
+❯ python3 read_headers.py bomb-fw.uf2 | grep 'Flags'
+
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+Flags: 0x2000
+[...]
+```
+
+Les [flags possibles](https://github.com/microsoft/uf2/blob/master/README.md#flags) sont:
+
+- `0x00000001` – n'est pas la mémoire flash principale – ce bloc doit être ignoré lors de l'écriture de la mémoire flash de l'appareil ; il peut être utilisé pour stocker des "commentaires".
+- `0x00001000` – conteneur de fichier.
+- `0x00002000` – familyID présent – lorsqu'il est défini, fileSize/familyID contient une valeur identifiant la famille de carte (généralement correspond à un microcontrôleur).
+- `0x00004000` – somme de contrôle MD5 présente.
+- `0x00008000` – balises d'extension présentes.
+
+### Analyse des _headers_
+
+__À part__ pour le ___bloc 0___, qui donne des informations sur la Board. Il semblerait donc que tous __les blocs contiennent uniquement des données__.  
+Ça nous simplifie la vie, cela fait ça de moins à gérer dans le script.
+
+On constate également que l'__adresse__ à laquelle le ___firmware_ est chargé__ est `0x10000000`. Cela nous servira lorsque l'on fera la _rétro-ingénerie_ du _firmware_.
+
+
