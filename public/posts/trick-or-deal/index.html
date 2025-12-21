@@ -13,7 +13,7 @@ Analysis
 The binary gives us a menu with 5 actions. Each action will call a function.">
         <meta name="HandheldFriendly" content="True">
         <meta name="MobileOptimized" content="320">
-        <meta name="generator" content="Hugo 0.147.8">
+        <meta name="generator" content="Hugo 0.153.1">
         <meta name="robots" content="index,follow">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         
@@ -368,7 +368,8 @@ Starting program: <font color="#A6E22E">./trick_or_deal</font>
 <li>Action <strong>4</strong> <em>free()</em> the variable <code>storage</code>.</li>
 </ul>
 <blockquote>
-<p>If you haven&rsquo;t solved the binary yet. Stop here, and try to exploit the binary.</p></blockquote>
+<p>If you haven&rsquo;t solved the binary yet. Stop here, and try to exploit the binary.</p>
+</blockquote>
 <h2 id="the-bug">The Bug</h2>
 <p>We have a <strong>Use-After-Free</strong> bug, which means that the program does not check if the memory has been free when we call the functions. Here we have a possibility to realloc data of our own, and still use the <em>action 1</em> that call the pointer present on the heap.</p>
 <h2 id="the-exploit">The exploit</h2>

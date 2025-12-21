@@ -18,7 +18,7 @@ This is an affiliate link, I make a bit of money if create a new account.
 Feel free to use your prefered hosting. It makes no difference whatsoever.">
         <meta name="HandheldFriendly" content="True">
         <meta name="MobileOptimized" content="320">
-        <meta name="generator" content="Hugo 0.145.0">
+        <meta name="generator" content="Hugo 0.153.1">
         <meta name="robots" content="index,follow">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         
@@ -86,7 +86,8 @@ In my case, I am going to use Digital Ocean, with an Ubuntu 24.10 droplet.</p>
 <p><a href="https://www.digitalocean.com/">https://www.digitalocean.com/</a></p>
 <blockquote>
 <p>This is an <strong>affiliate link</strong>, I make a bit of money if create a new account.<br>
-Feel free to <strong>use your prefered hosting</strong>. It makes no difference whatsoever.</p></blockquote>
+Feel free to <strong>use your prefered hosting</strong>. It makes no difference whatsoever.</p>
+</blockquote>
 <h2 id="install-docker">Install Docker</h2>
 <p>We are going to install CTFd with the Docker installation, as it makes things a bit easier.<br>
 First, let&rsquo;s <a href="https://docs.docker.com/engine/install/ubuntu/"><strong>install docker</strong></a> on our <strong>Ubuntu</strong> server.</p>
@@ -100,9 +101,9 @@ First, let&rsquo;s <a href="https://docs.docker.com/engine/install/ubuntu/"><str
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Add the repository to Apt sources:</span>
 </span></span><span style="display:flex;"><span>echo <span style="color:#ae81ff">\
-</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  <span style="color:#e6db74">&#34;deb [arch=</span><span style="color:#66d9ef">$(</span>dpkg --print-architecture<span style="color:#66d9ef">)</span><span style="color:#e6db74"> signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+</span></span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;deb [arch=</span><span style="color:#66d9ef">$(</span>dpkg --print-architecture<span style="color:#66d9ef">)</span><span style="color:#e6db74"> signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
 </span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  </span><span style="color:#66d9ef">$(</span>. /etc/os-release <span style="color:#f92672">&amp;&amp;</span> echo <span style="color:#e6db74">&#34;</span>$VERSION_CODENAME<span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">)</span><span style="color:#e6db74"> stable&#34;</span> | <span style="color:#ae81ff">\
-</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
+</span></span></span><span style="display:flex;"><span>  sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
 </span></span><span style="display:flex;"><span>sudo apt-get update
 </span></span></code></pre></div><p>And then install <code>docker</code>, and <code>docker-compose</code>:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
@@ -171,11 +172,11 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 <h3 id="request-a-lets-encrypt-certificate">Request a Let&rsquo;s Encrypt certificate</h3>
 <p>We will use the <a href="https://eff-certbot.readthedocs.io/en/stable/install.html#alternative-1-docker">docker method</a> to request a certificate.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo docker run -it --rm --name certbot <span style="color:#ae81ff">\
-</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>            -v <span style="color:#e6db74">&#34;/etc/letsencrypt:/etc/letsencrypt&#34;</span> <span style="color:#ae81ff">\
-</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>            -v <span style="color:#e6db74">&#34;/var/lib/letsencrypt:/var/lib/letsencrypt&#34;</span> <span style="color:#ae81ff">\
-</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>            -p 80:80 <span style="color:#ae81ff">\
-</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>            -p 443:443 <span style="color:#ae81ff">\
-</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>            certbot/certbot certonly
+</span></span></span><span style="display:flex;"><span>            -v <span style="color:#e6db74">&#34;/etc/letsencrypt:/etc/letsencrypt&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>            -v <span style="color:#e6db74">&#34;/var/lib/letsencrypt:/var/lib/letsencrypt&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>            -p 80:80 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>            -p 443:443 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>            certbot/certbot certonly
 </span></span></code></pre></div><p><strong>Choose</strong> the <strong>option 1</strong> to spin-up a temporary server:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-plain" data-lang="plain"><span style="display:flex;"><span>How would you like to authenticate with the ACME CA?
 </span></span><span style="display:flex;"><span>- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

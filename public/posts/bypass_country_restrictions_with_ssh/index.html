@@ -9,10 +9,11 @@ But you&rsquo;re not in France, so France TV blocks you if your IP is not French
 
 
 Your operator locates you in an area where this video is not available (Denmark).
+
 At this point, you might think about taking a VPN subscription or find a free shaddy VPN that will inject malware into unencrypted HTTP pages.">
         <meta name="HandheldFriendly" content="True">
         <meta name="MobileOptimized" content="320">
-        <meta name="generator" content="Hugo 0.147.8">
+        <meta name="generator" content="Hugo 0.153.1">
         <meta name="robots" content="index,follow">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         
@@ -73,7 +74,8 @@ At this point, you might think about taking a VPN subscription or find a free sh
 <p>But you&rsquo;re not in France, so <strong><em>France TV</em> blocks you</strong> if your <strong>IP is not French</strong>.</p>
 <p><img src="/bypass_country/blocked.png" alt="France TV player indicating that the content is blocked"></p>
 <blockquote>
-<p>Your operator locates you in an area where this video is not available (Denmark).</p></blockquote>
+<p>Your operator locates you in an area where this video is not available (Denmark).</p>
+</blockquote>
 <p>At this point, you might think about taking a <strong>VPN subscription</strong> or find a free shaddy VPN that will inject malware into unencrypted HTTP pages.</p>
 <h2 id="ssh-port-forwarding-to-the-rescue">SSH port forwarding to the rescue</h2>
 <p>Luckily I was already renting a <strong>Linux server</strong> (<em>well, I forgot to cancel it</em>), <strong>located</strong> in <strong>France</strong>.</p>
@@ -103,11 +105,14 @@ Personally, I use <a href="https://addons.mozilla.org/fr/firefox/addon/switchyom
 <li><code>-D</code> is the interesting stuff. Let&rsquo;s look at the <strong>man page</strong>.</li>
 </ul>
 <blockquote>
-<p><code>-D [bind_address:]port</code>: Specifies a local <strong>“dynamic” application-level port forwarding</strong>.  This works by allocating a socket to <strong>listen to port</strong> on the <strong>local side</strong>, optionally bound to the specified bind_address.</p></blockquote>
+<p><code>-D [bind_address:]port</code>: Specifies a local <strong>“dynamic” application-level port forwarding</strong>.  This works by allocating a socket to <strong>listen to port</strong> on the <strong>local side</strong>, optionally bound to the specified bind_address.</p>
+</blockquote>
 <blockquote>
-<p>Whenever a connection is made to this port, the connection is <strong>forwarded over the secure channel</strong>, and the application protocol is then used to determine where to connect to from the remote machine.</p></blockquote>
+<p>Whenever a connection is made to this port, the connection is <strong>forwarded over the secure channel</strong>, and the application protocol is then used to determine where to connect to from the remote machine.</p>
+</blockquote>
 <blockquote>
-<p>Currently the <strong>SOCKS4</strong> and <strong>SOCKS5 protocols</strong> are supported, and ssh will act as a SOCKS server.  Only root can forward privileged ports.  Dynamic port forwardings can also be specified in the configuration file.</p></blockquote>
+<p>Currently the <strong>SOCKS4</strong> and <strong>SOCKS5 protocols</strong> are supported, and ssh will act as a SOCKS server.  Only root can forward privileged ports.  Dynamic port forwardings can also be specified in the configuration file.</p>
+</blockquote>
 <p>So <strong><code>-D</code></strong> let us create a <strong>SOCKS5 proxy</strong>, and the packets will be <strong>forwarded over SSH</strong>.</p>
 <h3 id="nice-whats-a-socks5-proxy-exactly">Nice, what&rsquo;s a SOCKS5 proxy exactly?</h3>
 <p>A <strong>proxy</strong> is something that <strong>sits between you and the internet</strong>. It will <em>relay</em> your requests to the different websites.</p>
