@@ -61,3 +61,9 @@ Make Powershell the default shell
 ```bash
 New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
 ```
+
+## ssh-copy-id for Windows
+
+```bash
+scp id_ed25519.pub olivier@192.168.56.106:/ProgramData/ssh/administrators_authorized_keys
+```
