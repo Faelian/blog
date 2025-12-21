@@ -236,6 +236,32 @@ Les [flags possibles](https://github.com/microsoft/uf2/blob/master/README.md#fla
 - `0x00004000` – somme de contrôle MD5 présente.
 - `0x00008000` – balises d'extension présentes.
 
+On constate aussi que les blocs contiennent tous 256 octets:
+
+```bash
+❯ python3 read_headers.py bomb-fw.uf2 | grep 'payload'
+
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+Size of the payload: 256
+```
+
+Je recommande d'utiliser [`hexyl`](https://github.com/sharkdp/hexyl) pour se donner une idée du contenu du fichier.
+
+```bash
+hexyl bomb-fw.uf2 -v | less -R
+```
+
 ### Analyse des _headers_
 
 __À part__ pour le ___bloc 0___, qui donne des informations sur la Board. Il semblerait donc que tous __les blocs contiennent uniquement des données__.  
@@ -243,4 +269,11 @@ __À part__ pour le ___bloc 0___, qui donne des informations sur la Board. Il se
 
 On constate également que l'__adresse__ à laquelle le ___firmware_ est chargé__ est `0x10000000`. Cela nous servira lorsque l'on fera la _rétro-ingénerie_ du _firmware_.
 
+### Extraction du firmware
+
+Après cette analyse, l'extraction du _firmware_ est assez simple:
+
+- on lit le fichier par blocs de 512 octets.
+- le premier bloc est ignoré
+- on écrit les 256 octets de données de chaque bloc dans un fichier.
 
