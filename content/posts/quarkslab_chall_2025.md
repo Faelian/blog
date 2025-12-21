@@ -205,7 +205,7 @@ La sortie du script est la suivante:
 <font color="#66D9EF">Total number of blocks:</font> 327
 <font color="#66D9EF">File size (or family ID):</font> 3834380121
 <font color="#66D9EF">Magic end:</font> 0xab16f30
-</pre></code></pre></div> 
+</code></pre></div> 
 {{</rawhtml>}}
 
 Si on fait un grep de `Flags`, on voit que l'on a que des `0x2000`.
@@ -276,4 +276,84 @@ Après cette analyse, l'extraction du _firmware_ est assez simple:
 - on lit le fichier par blocs de 512 octets.
 - le premier bloc est ignoré
 - on écrit les 256 octets de données de chaque bloc dans un fichier.
+
+__`extract_uf2.py`:__
+
+```python
+#!/usr/bin/env python3
+# coding: utf-8
+
+import struct
+import sys
+import argparse
+import os
+
+# ANSI escape codes for colors
+BOLD = '\033[1m'
+BLUE = '\033[94m'
+GREEN = '\033[32m'
+MAGENTA = '\033[95m'
+YELLOW = '\033[33m'
+RESET = '\033[0m'  # Reset to default color
+
+def unpack_little_endian(data):
+	return struct.unpack("<I", data)[0]
+
+parser = argparse.ArgumentParser(description="Dump basic UF2 block info.")
+parser.add_argument("uf2_file", help="Input UF2 file")
+parser.add_argument("-o", "--output", help="Write output to file instead of stdout")
+args = parser.parse_args()
+
+if args.output != None:
+	out_file = args.output
+else:
+	out_file = args.uf2_file.rstrip(".uf2") + ".bin"
+
+try:
+	output = open(out_file, "wb")
+except OSError as e:
+	print(f"Error opening output file: {e}", file=sys.stderr)
+	sys.exit(1)
+
+with open(args.uf2_file, 'rb') as f:
+	# ignore the first bloc
+	_ = f.read(512)
+
+	# entry point is in the first block
+	entry_point = None
+
+	while (block := f.read(512)):
+		magic1 = block[0:4]
+		magic2 = unpack_little_endian(block[4:8])
+		flags = unpack_little_endian(block[8:12])
+		targetAddr = unpack_little_endian(block[12:16])
+		payloadSize = unpack_little_endian(block[16:20])
+		blocNo = unpack_little_endian(block[20:24])
+		numBlocks = unpack_little_endian(block[24:28])
+		fileSize = unpack_little_endian(block[28:32])
+		file_data= block[32:-4]
+		magicEnd = unpack_little_endian(block[-4:])
+
+		if entry_point == None:
+			entry_point = targetAddr
+
+		data = file_data[:payloadSize]
+		output.write(data)
+
+
+print(f"[{GREEN}+{RESET}] Firmware written to {MAGENTA}{out_file}{RESET}")
+print(f"[{BLUE}-{RESET}] Firmware size: {BLUE}{hex(fileSize)}{RESET}")
+print(f"[{BLUE}-{RESET}] Firmware entry point: {BLUE}{hex(entry_point)}{RESET}")
+output.close()
+```
+
+We can use the script to extract the firmware.
+
+{{< rawhtml>}}
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="background-color:initial;"><font color="#FF6AC1">❯</font> <font color="#4E9A06">python3</font> <u style="text-decoration-style:solid">extract_uf2.py</u> <u style="text-decoration-style:solid">bomb-fw.uf2</u> 
+[<font color="#4E9A06">+</font>] Firmware written to <font color="#AD7FA8">bomb-fw.bin</font>
+[<font color="#729FCF">-</font>] Firmware size: <font color="#729FCF">0xe48bff59</font>
+[<font color="#729FCF">-</font>] Firmware entry point: <font color="#729FCF">0x10000000</font>
+</code></pre></div> 
+{{</rawhtml>}}
 
