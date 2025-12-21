@@ -100,7 +100,136 @@ Je n&rsquo;ai pas de photo du stand, mais il y avait une petite bombe fictive à
 </span></span><span style="display:flex;"><span>Wrote <span style="color:#ae81ff">0</span> bytes to flash.bin
 </span></span></code></pre></div><p>C&rsquo;est l&rsquo;endroit où j&rsquo;en était resté lors de la conférence, mais <em>hacker vaillant rien d&rsquo;impossible</em>, le format <code>uf2</code> n&rsquo;est pas très complexe. On peut <strong>écrire un script python</strong> pour extraire le firmware.</p>
 <h2 id="le-format-uf2">Le format UF2</h2>
-
+<p>Un fichier UF2 consiste de <strong>blocs de 512 octets</strong>. Chaque bloc commence avec un <strong><em>header</em> de 32 octets</strong>, suivit de données, et d&rsquo;un <em>magic number</em> final.<br>
+Tous les sont des <em>entiers 32 bit non-signés</em> en <em>little endian</em>.</p>
+<table>
+  <thead>
+      <tr>
+          <th>Offset</th>
+          <th>Size</th>
+          <th>Value</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>0</td>
+          <td>4</td>
+          <td>First magic number, <code>0x0A324655</code> (<code>&quot;UF2\n&quot;</code>)</td>
+      </tr>
+      <tr>
+          <td>4</td>
+          <td>4</td>
+          <td>Second magic number, <code>0x9E5D5157</code></td>
+      </tr>
+      <tr>
+          <td>8</td>
+          <td>4</td>
+          <td>Flags</td>
+      </tr>
+      <tr>
+          <td>12</td>
+          <td>4</td>
+          <td>Address in flash where the data should be written</td>
+      </tr>
+      <tr>
+          <td>16</td>
+          <td>4</td>
+          <td>Number of bytes used in data (often 256)</td>
+      </tr>
+      <tr>
+          <td>20</td>
+          <td>4</td>
+          <td>Sequential block number; starts at 0</td>
+      </tr>
+      <tr>
+          <td>24</td>
+          <td>4</td>
+          <td>Total number of blocks in file</td>
+      </tr>
+      <tr>
+          <td>28</td>
+          <td>4</td>
+          <td>File size or board family ID or zero</td>
+      </tr>
+      <tr>
+          <td>32</td>
+          <td>476</td>
+          <td>Data, padded with zeros</td>
+      </tr>
+      <tr>
+          <td>508</td>
+          <td>4</td>
+          <td>Final magic number, <code>0x0AB16F30</code></td>
+      </tr>
+  </tbody>
+</table>
+<p>Le <strong>struct C</strong> suivant correspond à un bloc <em>UF2</em>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> UF2_Block {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 32 byte header
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> magicStart0;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> magicStart1;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> flags;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> targetAddr;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> payloadSize;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> blockNo;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> numBlocks;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> fileSize; <span style="color:#75715e">// or familyID;
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint8_t</span> data[<span style="color:#ae81ff">476</span>];
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> magicEnd;
+</span></span><span style="display:flex;"><span>} UF2_Block;
+</span></span></code></pre></div><p>Aperçu du fimware avec <code>hexyl</code>:</p>
+<p><img src="/chall_quarkslab/hexyl_firmware.png" alt="aperçu du firmware avec hexyl"></p>
+<h3 id="lecture-des-headers">Lecture des <em>headers</em></h3>
+<p>Pour avoir une idée de ce à quoi ressemble le fichier, j&rsquo;ai d&rsquo;abord écrit un script pour lire les entêtes de chaque bloc.</p>
+<p><strong><code>read_headers.py</code></strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e">#!/usr/bin/env python3</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># coding: utf-8</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> struct
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> sys
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># ANSI escape codes for colors</span>
+</span></span><span style="display:flex;"><span>BOLD <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\033</span><span style="color:#e6db74">[1m&#39;</span>
+</span></span><span style="display:flex;"><span>BLUE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\033</span><span style="color:#e6db74">[94m&#39;</span>
+</span></span><span style="display:flex;"><span>MAGENTA <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\033</span><span style="color:#e6db74">[95m&#39;</span>
+</span></span><span style="display:flex;"><span>YELLOW <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\033</span><span style="color:#e6db74">[33m&#39;</span>
+</span></span><span style="display:flex;"><span>RESET <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\033</span><span style="color:#e6db74">[0m&#39;</span>  <span style="color:#75715e"># Reset to default color</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">unpack_little_endian</span>(data):
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> struct<span style="color:#f92672">.</span>unpack(<span style="color:#e6db74">&#34;&lt;I&#34;</span>, data)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> len(sys<span style="color:#f92672">.</span>argv) <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>	print(<span style="color:#e6db74">&#34;Usage:&#34;</span>)
+</span></span><span style="display:flex;"><span>	print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">0</span>]<span style="color:#e6db74">}</span><span style="color:#e6db74"> [uf2_file]&#34;</span>)
+</span></span><span style="display:flex;"><span>	exit()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> open(sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">1</span>], <span style="color:#e6db74">&#39;rb&#39;</span>) <span style="color:#66d9ef">as</span> f:
+</span></span><span style="display:flex;"><span>	i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">while</span> (block <span style="color:#f92672">:=</span> f<span style="color:#f92672">.</span>read(<span style="color:#ae81ff">512</span>)):
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BOLD<span style="color:#e6db74">}{</span>MAGENTA<span style="color:#e6db74">}</span><span style="color:#e6db74">Block </span><span style="color:#e6db74">{</span>i<span style="color:#e6db74">}</span><span style="color:#e6db74">:</span><span style="color:#e6db74">{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>		i <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># reference: https://github.com/microsoft/uf2/blob/master/README.md#file-format</span>
+</span></span><span style="display:flex;"><span>		magic1 <span style="color:#f92672">=</span> block[<span style="color:#ae81ff">0</span>:<span style="color:#ae81ff">4</span>]
+</span></span><span style="display:flex;"><span>		magic2 <span style="color:#f92672">=</span> unpack_little_endian(block[<span style="color:#ae81ff">4</span>:<span style="color:#ae81ff">8</span>])
+</span></span><span style="display:flex;"><span>		flags <span style="color:#f92672">=</span> unpack_little_endian(block[<span style="color:#ae81ff">8</span>:<span style="color:#ae81ff">12</span>])
+</span></span><span style="display:flex;"><span>		targetAddr <span style="color:#f92672">=</span> unpack_little_endian(block[<span style="color:#ae81ff">12</span>:<span style="color:#ae81ff">16</span>])
+</span></span><span style="display:flex;"><span>		payloadSize <span style="color:#f92672">=</span> unpack_little_endian(block[<span style="color:#ae81ff">16</span>:<span style="color:#ae81ff">20</span>])
+</span></span><span style="display:flex;"><span>		blocNo <span style="color:#f92672">=</span> unpack_little_endian(block[<span style="color:#ae81ff">20</span>:<span style="color:#ae81ff">24</span>])
+</span></span><span style="display:flex;"><span>		numBlocks <span style="color:#f92672">=</span> unpack_little_endian(block[<span style="color:#ae81ff">24</span>:<span style="color:#ae81ff">28</span>])
+</span></span><span style="display:flex;"><span>		fileSize <span style="color:#f92672">=</span> unpack_little_endian(block[<span style="color:#ae81ff">28</span>:<span style="color:#ae81ff">32</span>])
+</span></span><span style="display:flex;"><span>		magicEnd <span style="color:#f92672">=</span> unpack_little_endian(block[<span style="color:#f92672">-</span><span style="color:#ae81ff">4</span>:])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BLUE<span style="color:#e6db74">}</span><span style="color:#e6db74">First magic number:</span><span style="color:#e6db74">{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>magic1<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BLUE<span style="color:#e6db74">}</span><span style="color:#e6db74">Second magic number:</span><span style="color:#e6db74">{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>hex(magic2)<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BLUE<span style="color:#e6db74">}</span><span style="color:#e6db74">Flags:</span><span style="color:#e6db74">{</span>YELLOW<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>hex(flags)<span style="color:#e6db74">}{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BLUE<span style="color:#e6db74">}</span><span style="color:#e6db74">Target address:</span><span style="color:#e6db74">{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>hex(targetAddr)<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BLUE<span style="color:#e6db74">}</span><span style="color:#e6db74">Size of the payload:</span><span style="color:#e6db74">{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>payloadSize<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BLUE<span style="color:#e6db74">}</span><span style="color:#e6db74">Bloc number:</span><span style="color:#e6db74">{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>blocNo<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BLUE<span style="color:#e6db74">}</span><span style="color:#e6db74">Total number of blocks:</span><span style="color:#e6db74">{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>numBlocks<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BLUE<span style="color:#e6db74">}</span><span style="color:#e6db74">File size (or family ID):</span><span style="color:#e6db74">{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>fileSize<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>		print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>BLUE<span style="color:#e6db74">}</span><span style="color:#e6db74">Magic end:</span><span style="color:#e6db74">{</span>RESET<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>hex(magicEnd)<span style="color:#e6db74">}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div>
 </div>
 
         <footer class="post-footer clearfix"><div class="share">
